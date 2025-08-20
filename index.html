@@ -167,12 +167,12 @@
                         <span id="score">0</span>
                     </div>
                     <div class="text-red-500">
-                        <span class="text-2xl">🦋</span>
+                        <span class="text-2xl">⏰</span>
                         <span id="timer">10:00</span>
                     </div>
                     <div class="text-green-600">
                         <span class="text-2xl">🦋</span>
-                        Level <span id="level">1</span>/10
+                        Level <span id="level">1</span>/1
                     </div>
                 </div>
                 <div class="mt-2">
@@ -208,7 +208,7 @@
             constructor() {
                 this.score = 0;
                 this.level = 1;
-                this.maxLevel = 10;
+                this.maxLevel = 1; // Modified: Game ends after level 1
                 this.timeLeft = 600; // 10 minutes = 600 seconds
                 this.gameActive = false;
                 this.gameTimer = null;
@@ -227,16 +227,7 @@
                 
                 // Level configuration - continuous spawning for motor skill practice
                 this.levelConfig = {
-                    1: { spawnRate: 800, butterfliesPerSpawn: 1, butterfliesNeeded: 10 },
-                    2: { spawnRate: 750, butterfliesPerSpawn: 1, butterfliesNeeded: 20 },
-                    3: { spawnRate: 700, butterfliesPerSpawn: 1, butterfliesNeeded: 30 },
-                    4: { spawnRate: 650, butterfliesPerSpawn: 1, butterfliesNeeded: 40 },
-                    5: { spawnRate: 600, butterfliesPerSpawn: 1, butterfliesNeeded: 50 },
-                    6: { spawnRate: 550, butterfliesPerSpawn: 1, butterfliesNeeded: 60 },
-                    7: { spawnRate: 500, butterfliesPerSpawn: 1, butterfliesNeeded: 70 },
-                    8: { spawnRate: 450, butterfliesPerSpawn: 1, butterfliesNeeded: 80 },
-                    9: { spawnRate: 400, butterfliesPerSpawn: 1, butterfliesNeeded: 90 },
-                    10: { spawnRate: 350, butterfliesPerSpawn: 1, butterfliesNeeded: 100 }
+                    1: { spawnRate: 800, butterfliesPerSpawn: 1, butterfliesNeeded: 10 }
                 };
                 
                 this.initializeElements();
@@ -529,32 +520,11 @@
             
             checkLevelUp() {
                 const currentConfig = this.levelConfig[this.level];
-                if (currentConfig && this.butterfliesCaught >= currentConfig.butterfliesNeeded && this.level < this.maxLevel) {
-                    this.level++;
-                    this.updateLevelSettings();
-                    
-                    // Restart spawn timer with new rate
-                    clearInterval(this.spawnTimer);
-                    if (this.gameActive) {
-                        this.spawnTimer = setInterval(() => this.spawnButterfly(), this.spawnRate);
-                    }
-                    
-                    const newConfig = this.levelConfig[this.level];
-                    let message = `🎊 Level ${this.level}! 🎊\n`;
-                    message += `Target: Tangkap ${newConfig.butterfliesNeeded} kupu-kupu 🦋\n`;
-                    
-                    if (newConfig.butterfliesPerSpawn > 1) {
-                        message += `Sekarang ${newConfig.butterfliesPerSpawn} objek muncul sekaligus!\n`;
-                    }
-                    message += `Kecepatan spawn: ${newConfig.spawnRate/1000} detik`;
-                    
-                    this.showCelebration(message);
-                    
-                    // Check if reached max level
+                if (currentConfig && this.butterfliesCaught >= currentConfig.butterfliesNeeded) {
+                    // Check if the current level is the last level (level 1)
                     if (this.level === this.maxLevel) {
-                        setTimeout(() => {
-                            this.showCelebration(`🏆 SELAMAT! 🏆\nKamu telah menyelesaikan semua 10 level!\nKamu adalah Master Kupu-kupu!`);
-                        }, 2000);
+                        this.endGame();
+                        this.showCelebration(`🎉 Selamat! 🎉\nKamu telah menyelesaikan level 1!\nSkor Akhir: ${this.score.toFixed(1)}`);
                     }
                 }
             }
@@ -604,14 +574,11 @@
                 
                 // Update progress bar
                 const currentConfig = this.levelConfig[this.level];
-                if (currentConfig && this.level < this.maxLevel) {
+                if (currentConfig) {
                     const progress = Math.min((this.butterfliesCaught / currentConfig.butterfliesNeeded) * 100, 100);
                     
                     this.progressBar.style.width = progress + '%';
                     this.progressText.textContent = `${this.butterfliesCaught}/${currentConfig.butterfliesNeeded} kupu-kupu 🦋`;
-                } else if (this.level === this.maxLevel) {
-                    this.progressBar.style.width = '100%';
-                    this.progressText.textContent = 'Level Maksimum!';
                 }
             }
             
