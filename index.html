@@ -1,1 +1,632 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Motorik Halus - Tangkap Kupu-kupu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Nunito:wght@400;600;700&display=swap');
+        
+        /* Mengunci tata letak dan menonaktifkan scrolling */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .game-title {
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .butterfly {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            animation: flutter 2s infinite ease-in-out;
+        }
+        
+        .butterfly:hover {
+            transform: scale(1.1);
+        }
+        
+        @keyframes flutter {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(2deg); }
+            50% { transform: translateY(-5px) rotate(-1deg); }
+            75% { transform: translateY(-8px) rotate(1deg); }
+        }
+        
+        .flower {
+            animation: sway 3s infinite ease-in-out;
+        }
+        
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(3deg); }
+        }
+        
+        .cloud {
+            animation: float 4s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(20px); }
+        }
+        
+        .celebration {
+            animation: bounce 0.6s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .star-particle {
+            animation: sparkle 1s ease-out forwards;
+        }
+        
+        @keyframes sparkle {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) rotate(180deg); opacity: 0; }
+        }
+        
+        /* Audio elements - hidden but functional */
+        .audio-hidden {
+            display: none;
+        }
+        
+        /* Gaya tambahan untuk zoom-out */
+        .zoom-container {
+            transform: scale(0.85);
+            transform-origin: top left;
+            width: 117.64%;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="min-h-screen" style="background: linear-gradient(to bottom, rgba(125, 211, 252, 0.8), rgba(186, 230, 253, 0.8), rgba(187, 247, 208, 0.8)), url('assets/images/background.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <div class="zoom-container">
+        <div class="cloud absolute top-10 left-10 text-6xl opacity-80">☁️</div>
+        <div class="cloud absolute top-20 right-20 text-4xl opacity-60" style="animation-delay: -2s;">☁️</div>
+        <div class="cloud absolute top-32 left-1/3 text-5xl opacity-70" style="animation-delay: -1s;">☁️</div>
+        
+        <div class="absolute top-8 right-8 text-8xl animate-pulse">☀️</div>
+        
+        <audio id="backgroundMusic" class="audio-hidden" loop>
+            <source src="assets/audio/background_music.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="clickSound" class="audio-hidden">
+            <source src="assets/audio/efekklikhewan.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="buttonSound" class="audio-hidden">
+            <source src="assets/audio/efektombol.mp3" type="audio/mpeg">
+        </audio>
+        
+        <div id="welcomeCard" class="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+            <div class="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-lg mx-4 transform scale-100 transition-all">
+                <div class="text-6xl mb-4">🦋</div>
+                <h2 class="game-title text-3xl text-purple-600 mb-6">Selamat Datang!</h2>
+                
+                <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 mb-6">
+                    <h3 class="text-xl font-bold text-purple-700 mb-4">🎯 Cara Bermain</h3>
+                    <div class="space-y-3 text-left">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🦋</span>
+                            <span class="text-gray-700">Klik kupu-kupu = 1 poin</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🐶</span>
+                            <span class="text-gray-700">Klik hewan lain = 0.5 poin</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">⏰</span>
+                            <span class="text-gray-700">Level tinggi = objek lebih banyak & cepat</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🏆</span>
+                            <span class="text-gray-700">Tangkap kupu-kupu sesuai target untuk naik level</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-4 mb-6">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-bold">💡 Tips:</span> Game ini membantu melatih koordinasi mata-tangan dan ketepatan motorik halus anak
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 mb-6">
+                    <div class="text-sm text-gray-700 text-center space-y-1">
+                        <div class="font-semibold">Created : GlowandGrow</div>
+                        <div class="font-semibold">Contact person : +6289629065679 /Rahma</div>
+                    </div>
+                </div>
+                
+                <button id="startGameBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all">
+                    🎮 Mulai Bermain!
+                </button>
+            </div>
+        </div>
+
+        <div id="gameHeader" class="text-center pt-8 pb-4 hidden">
+            <h1 class="game-title text-4xl md:text-6xl text-yellow-600 mb-4 drop-shadow-lg">
+                🦋 Tangkap Kupu-kupu 🦋
+            </h1>
+            <div class="bg-white/80 backdrop-blur-sm rounded-full px-8 py-4 mx-auto max-w-md shadow-lg">
+                <div class="flex justify-between items-center text-lg font-bold">
+                    <div class="text-purple-600">
+                        <span class="text-2xl">🦋</span>
+                        <span id="score">0</span>
+                    </div>
+                    <div class="text-red-500">
+                        <span class="text-2xl">🦋</span>
+                        <span id="timer">10:00</span>
+                    </div>
+                    <div class="text-green-600">
+                        <span class="text-2xl">🦋</span>
+                        Level <span id="level">1</span>/10
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="text-xs text-gray-600 text-center mb-1">Progress ke Level Berikutnya</div>
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="text-xs text-gray-600 text-center mt-1">
+                        <span id="progressText">0/10 kupu-kupu 🦋</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gameArea" class="relative mx-4 h-96 bg-gradient-to-b from-green-300 to-green-400 rounded-3xl shadow-2xl overflow-hidden border-4 border-green-500 hidden">
+            </div>
+        
+        <div id="gameControls" class="text-center mt-8 space-x-4 hidden">
+            <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all">
+                🎮 Mulai Game
+            </button>
+            <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all" disabled>
+                ⏸️ Pause
+            </button>
+            <button id="resetBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all">
+                🔄 Reset
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class ButterflyGame {
+            constructor() {
+                this.score = 0;
+                this.level = 1;
+                this.maxLevel = 10;
+                this.timeLeft = 600; // 10 minutes = 600 seconds
+                this.gameActive = false;
+                this.gameTimer = null;
+                this.spawnTimer = null;
+                this.butterflies = [];
+                this.butterflyColors = ['🦋'];
+                this.otherShapes = ['🐶', '🐱', '🐰', '🐸', '🐧', '🐨', '🦊', '🐯', '🐷', '🐵', '🐮', '🐻', '🦁', '🐼', '🐺', '🐹'];
+                this.spawnRate = 800; // milliseconds - continuous spawning
+                this.butterfliesPerSpawn = 1; // number of butterflies to spawn at once
+                this.butterfliesCaught = 0; // track butterflies specifically
+                
+                // Audio elements
+                this.backgroundMusic = null;
+                this.clickSound = null;
+                this.buttonSound = null;
+                
+                // Level configuration - continuous spawning for motor skill practice
+                this.levelConfig = {
+                    1: { spawnRate: 800, butterfliesPerSpawn: 1, butterfliesNeeded: 10 },
+                    2: { spawnRate: 750, butterfliesPerSpawn: 1, butterfliesNeeded: 20 },
+                    3: { spawnRate: 700, butterfliesPerSpawn: 1, butterfliesNeeded: 30 },
+                    4: { spawnRate: 650, butterfliesPerSpawn: 1, butterfliesNeeded: 40 },
+                    5: { spawnRate: 600, butterfliesPerSpawn: 1, butterfliesNeeded: 50 },
+                    6: { spawnRate: 550, butterfliesPerSpawn: 1, butterfliesNeeded: 60 },
+                    7: { spawnRate: 500, butterfliesPerSpawn: 1, butterfliesNeeded: 70 },
+                    8: { spawnRate: 450, butterfliesPerSpawn: 1, butterfliesNeeded: 80 },
+                    9: { spawnRate: 400, butterfliesPerSpawn: 1, butterfliesNeeded: 90 },
+                    10: { spawnRate: 350, butterfliesPerSpawn: 1, butterfliesNeeded: 100 }
+                };
+                
+                this.initializeElements();
+                this.initializeAudio();
+                this.bindEvents();
+            }
+            
+            initializeElements() {
+                this.gameArea = document.getElementById('gameArea');
+                this.scoreElement = document.getElementById('score');
+                this.timerElement = document.getElementById('timer');
+                this.levelElement = document.getElementById('level');
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.welcomeCard = document.getElementById('welcomeCard');
+                this.startGameBtn = document.getElementById('startGameBtn');
+                this.gameHeader = document.getElementById('gameHeader');
+                this.gameControls = document.getElementById('gameControls');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressText = document.getElementById('progressText');
+            }
+            
+            initializeAudio() {
+                this.backgroundMusic = document.getElementById('backgroundMusic');
+                this.clickSound = document.getElementById('clickSound');
+                this.buttonSound = document.getElementById('buttonSound');
+                
+                // Set volume levels
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.volume = 0.3; // Background music at 30%
+                }
+                if (this.clickSound) {
+                    this.clickSound.volume = 0.6; // Click sound at 60%
+                }
+                if (this.buttonSound) {
+                    this.buttonSound.volume = 0.7; // Button sound at 70%
+                }
+            }
+            
+            playSound(soundElement) {
+                if (soundElement) {
+                    soundElement.currentTime = 0; // Reset to beginning
+                    soundElement.play().catch(e => {
+                        // Handle autoplay restrictions silently
+                        console.log('Audio play prevented by browser policy');
+                    });
+                }
+            }
+            
+            playBackgroundMusic() {
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.play().catch(e => {
+                        console.log('Background music play prevented by browser policy');
+                    });
+                }
+            }
+            
+            pauseBackgroundMusic() {
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.pause();
+                }
+            }
+            
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => {
+                    this.playSound(this.buttonSound);
+                    this.startGame();
+                });
+                this.pauseBtn.addEventListener('click', () => {
+                    this.playSound(this.buttonSound);
+                    this.pauseGame();
+                });
+                this.resetBtn.addEventListener('click', () => {
+                    this.playSound(this.buttonSound);
+                    this.resetGame();
+                });
+                this.startGameBtn.addEventListener('click', () => {
+                    this.playSound(this.buttonSound);
+                    this.showGameInterface();
+                });
+            }
+            
+            showGameInterface() {
+                this.welcomeCard.style.display = 'none';
+                this.gameHeader.classList.remove('hidden');
+                this.gameArea.classList.remove('hidden');
+                this.gameControls.classList.remove('hidden');
+            }
+            
+            startGame() {
+                if (!this.gameActive) {
+                    this.gameActive = true;
+                    this.startBtn.disabled = true;
+                    this.pauseBtn.disabled = false;
+                    this.startBtn.textContent = '🎮 Game Berjalan';
+                    this.startBtn.classList.add('opacity-50');
+                    
+                    // Start background music
+                    this.playBackgroundMusic();
+                    
+                    // Set initial level configuration
+                    this.updateLevelSettings();
+                    
+                    this.gameTimer = setInterval(() => this.updateTimer(), 1000);
+                    this.spawnTimer = setInterval(() => this.spawnButterfly(), this.spawnRate);
+                }
+            }
+            
+            pauseGame() {
+                if (this.gameActive) {
+                    this.gameActive = false;
+                    this.startBtn.disabled = false;
+                    this.pauseBtn.disabled = true;
+                    this.startBtn.textContent = '▶️ Lanjutkan';
+                    this.startBtn.classList.remove('opacity-50');
+                    
+                    // Pause background music
+                    this.pauseBackgroundMusic();
+                    
+                    clearInterval(this.gameTimer);
+                    clearInterval(this.spawnTimer);
+                }
+            }
+            
+            updateLevelSettings() {
+                const config = this.levelConfig[this.level];
+                if (config) {
+                    this.spawnRate = config.spawnRate;
+                    this.butterfliesPerSpawn = config.butterfliesPerSpawn;
+                }
+            }
+            
+            resetGame() {
+                this.gameActive = false;
+                this.score = 0;
+                this.level = 1;
+                this.timeLeft = 600; // 10 minutes = 600 seconds
+                this.spawnRate = 800;
+                this.butterfliesPerSpawn = 1;
+                this.butterfliesCaught = 0;
+                
+                // Stop background music and reset
+                this.pauseBackgroundMusic();
+                if (this.backgroundMusic) {
+                    this.backgroundMusic.currentTime = 0;
+                }
+                
+                clearInterval(this.gameTimer);
+                clearInterval(this.spawnTimer);
+                
+                this.butterflies.forEach(butterfly => butterfly.remove());
+                this.butterflies = [];
+                
+                this.updateDisplay();
+                this.updateTimerDisplay();
+                
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.startBtn.textContent = '🎮 Mulai Game';
+                this.startBtn.classList.remove('opacity-50');
+            }
+            
+            updateTimer() {
+                this.timeLeft--;
+                
+                // Format time as MM:SS
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                this.timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (this.timeLeft <= 0) {
+                    this.endGame();
+                }
+            }
+            
+            endGame() {
+                this.gameActive = false;
+                clearInterval(this.gameTimer);
+                clearInterval(this.spawnTimer);
+                
+                // Stop background music
+                this.pauseBackgroundMusic();
+                
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.startBtn.textContent = '🎮 Mulai Lagi';
+                this.startBtn.classList.remove('opacity-50');
+                
+                // Show final score with time up message
+                if (this.timeLeft <= 0) {
+                    this.showCelebration(`⏰ Waktu Habis! ⏰\nSkor Akhir: ${this.score.toFixed(1)}\nLevel Tercapai: ${this.level}/10\nKupu-kupu Ditangkap: ${this.butterfliesCaught}`);
+                } else {
+                    this.showCelebration(`🎉 Game Selesai! 🎉\nSkor Akhir: ${this.score.toFixed(1)}\nLevel: ${this.level}`);
+                }
+            }
+            
+            spawnButterfly() {
+                if (!this.gameActive) return;
+                
+                // Spawn objects continuously - more frequent spawning
+                const element = document.createElement('div');
+                element.className = 'butterfly absolute text-4xl select-none';
+                
+                // 50% chance for butterfly, 50% chance for other shapes for balanced practice
+                const isButterfly = Math.random() < 0.5;
+                if (isButterfly) {
+                    element.innerHTML = '🦋';
+                    element.dataset.type = 'butterfly';
+                } else {
+                    element.innerHTML = this.otherShapes[Math.floor(Math.random() * this.otherShapes.length)];
+                    element.dataset.type = 'shape';
+                }
+                
+                // Random position within game area, ensuring no overlap
+                const maxX = this.gameArea.offsetWidth - 60;
+                const maxY = this.gameArea.offsetHeight - 60;
+                let x, y, attempts = 0;
+                
+                do {
+                    x = Math.random() * maxX;
+                    y = Math.random() * maxY;
+                    attempts++;
+                } while (this.isPositionOccupied(x, y) && attempts < 10);
+                
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                
+                // Add click event
+                element.addEventListener('click', (e) => {
+                    this.playSound(this.clickSound);
+                    this.catchElement(e, element);
+                });
+                
+                this.gameArea.appendChild(element);
+                this.butterflies.push(element);
+                
+                // Remove element after some time if not caught - longer lifespan for continuous practice
+                const lifespan = Math.max(3000, 5000 - (this.level * 100));
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.remove();
+                        const index = this.butterflies.indexOf(element);
+                        if (index > -1) {
+                            this.butterflies.splice(index, 1);
+                        }
+                    }
+                }, lifespan);
+            }
+            
+            isPositionOccupied(x, y) {
+                const minDistance = 80; // Minimum distance between butterflies
+                return this.butterflies.some(butterfly => {
+                    const butterflyX = parseInt(butterfly.style.left);
+                    const butterflyY = parseInt(butterfly.style.top);
+                    const distance = Math.sqrt(Math.pow(x - butterflyX, 2) + Math.pow(y - butterflyY, 2));
+                    return distance < minDistance;
+                });
+            }
+            
+            catchElement(event, element) {
+                event.preventDefault();
+                
+                // Add points based on element type
+                let points = 0;
+                if (element.dataset.type === 'butterfly') {
+                    points = 1;
+                    this.butterfliesCaught++;
+                } else {
+                    points = 0.5;
+                }
+                this.score += points;
+                
+                // Create particle effect
+                this.createParticleEffect(event.clientX, event.clientY);
+                
+                // Remove element
+                element.remove();
+                const index = this.butterflies.indexOf(element);
+                if (index > -1) {
+                    this.butterflies.splice(index, 1);
+                }
+                
+                // Check for level up
+                this.checkLevelUp();
+                
+                this.updateDisplay();
+                this.updateTimerDisplay();
+            }
+            
+            checkLevelUp() {
+                const currentConfig = this.levelConfig[this.level];
+                if (currentConfig && this.butterfliesCaught >= currentConfig.butterfliesNeeded && this.level < this.maxLevel) {
+                    this.level++;
+                    this.updateLevelSettings();
+                    
+                    // Restart spawn timer with new rate
+                    clearInterval(this.spawnTimer);
+                    if (this.gameActive) {
+                        this.spawnTimer = setInterval(() => this.spawnButterfly(), this.spawnRate);
+                    }
+                    
+                    const newConfig = this.levelConfig[this.level];
+                    let message = `🎊 Level ${this.level}! 🎊\n`;
+                    message += `Target: Tangkap ${newConfig.butterfliesNeeded} kupu-kupu 🦋\n`;
+                    
+                    if (newConfig.butterfliesPerSpawn > 1) {
+                        message += `Sekarang ${newConfig.butterfliesPerSpawn} objek muncul sekaligus!\n`;
+                    }
+                    message += `Kecepatan spawn: ${newConfig.spawnRate/1000} detik`;
+                    
+                    this.showCelebration(message);
+                    
+                    // Check if reached max level
+                    if (this.level === this.maxLevel) {
+                        setTimeout(() => {
+                            this.showCelebration(`🏆 SELAMAT! 🏆\nKamu telah menyelesaikan semua 10 level!\nKamu adalah Master Kupu-kupu!`);
+                        }, 2000);
+                    }
+                }
+            }
+            
+            createParticleEffect(x, y) {
+                const particles = ['⭐', '✨', '🌟', '💫'];
+                
+                for (let i = 0; i < 5; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'star-particle fixed pointer-events-none text-2xl';
+                    particle.innerHTML = particles[Math.floor(Math.random() * particles.length)];
+                    particle.style.left = (x - 20 + Math.random() * 40) + 'px';
+                    particle.style.top = (y - 20 + Math.random() * 40) + 'px';
+                    particle.style.zIndex = '1000';
+                    
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+            
+            showCelebration(message) {
+                const celebration = document.createElement('div');
+                celebration.className = 'fixed inset-0 flex items-center justify-center z-50 bg-black/50';
+                celebration.innerHTML = `
+                    <div class="bg-white rounded-3xl p-8 text-center shadow-2xl celebration max-w-md mx-4">
+                        <div class="text-6xl mb-4">🎉</div>
+                        <div class="text-xl font-bold text-purple-600 whitespace-pre-line">${message}</div>
+                        <button class="mt-6 bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full" onclick="this.parentElement.parentElement.remove()">
+                            Oke! 👍
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(celebration);
+                
+                setTimeout(() => {
+                    if (celebration.parentNode) {
+                        celebration.remove();
+                    }
+                }, 3000);
+            }
+            
+            updateDisplay() {
+                this.scoreElement.textContent = this.score.toFixed(1);
+                this.levelElement.textContent = this.level;
+                
+                // Update progress bar
+                const currentConfig = this.levelConfig[this.level];
+                if (currentConfig && this.level < this.maxLevel) {
+                    const progress = Math.min((this.butterfliesCaught / currentConfig.butterfliesNeeded) * 100, 100);
+                    
+                    this.progressBar.style.width = progress + '%';
+                    this.progressText.textContent = `${this.butterfliesCaught}/${currentConfig.butterfliesNeeded} kupu-kupu 🦋`;
+                } else if (this.level === this.maxLevel) {
+                    this.progressBar.style.width = '100%';
+                    this.progressText.textContent = 'Level Maksimum!';
+                }
+            }
+            
+            updateTimerDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                this.timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ButterflyGame();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e6dd9b6225fdca',t:'MTc1NTA3Mzk4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
